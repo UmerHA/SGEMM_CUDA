@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
   }
   cudaCheck(cudaSetDevice(deviceIdx));
 
-  printf("Running kernel %d on device %d.\n", kernel_num, deviceIdx);
+  //printf("Running kernel %d on device %d.\n", kernel_num, deviceIdx);
 
   // print some device info
   // CudaDeviceInfo();
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 
   long m, n, k, max_size;
   max_size = SIZE[SIZE.size() - 1];
-  std::cout << "Max size: " << max_size << std::endl;
+  //std::cout << "Max size: " << max_size << std::endl;
 
   float alpha = 1.0, beta = 0.0; // choosing these params makes GEMM into regular matmul (C=αAB+βC=AB)
 
@@ -92,9 +92,8 @@ int main(int argc, char **argv) {
   int repeat_times = 3; // 50;
   for (int size : SIZE) {
     m = n = k = size;
-
-    std::cout << "dimensions(m=n=k) " << m << ", alpha: " << alpha
-              << ", beta: " << beta << std::endl;
+    //std::cout << "dimensions(m=n=k) " << m << ", alpha: " << alpha << ", beta: " << beta << std::endl;
+    
     // Verify the correctness of the calculation, and execute it once before the
     // kernel function timing to avoid cold start errors
     if (kernel_num != 0) {
