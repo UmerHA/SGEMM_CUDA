@@ -541,7 +541,7 @@ void run_kernel(int kernel_num, int M, int N, int K, float alpha, float *A,
     runMatmulDoubleBuffering(M, N, K, alpha, A, B, beta, C);
     break;
   case 12:
-    runMamtulDoubleBuffering2(M, N, K, alpha, A, B, beta, C);
+    runMatmulDoubleBuffering2(M, N, K, alpha, A, B, beta, C);
     break;
   default:
     throw std::invalid_argument("Unknown kernel number");
