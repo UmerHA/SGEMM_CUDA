@@ -10,9 +10,7 @@
 #define CEIL_DIV(M, N) (((M) + (N)-1) / (N))
 
 template <const int BM, const int BN, const int BK, const int TM, const int TN>
-__global__ void matmulResolveBankConflicts(int M, int N, int K, float alpha,
-                                          float *A, float *B, float beta,
-                                          float *C) {
+__global__ void matmulResolveBankConflicts(const float *A, const float *B, float *C, int M, int N, int K) {
   const uint cRow = blockIdx.y;
   const uint cCol = blockIdx.x;
 

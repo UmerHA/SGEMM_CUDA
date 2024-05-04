@@ -12,8 +12,7 @@ MxK * KxN = MxN
 
 */
 
-__global__ void matmul_naive(int M, int N, int K, float alpha, const float *A,
-                            const float *B, float beta, float *C) {
+__global__ void matmul_naive(const float *A, const float *B, float *C, int M, int N, int K) {
   const uint x = blockIdx.x * blockDim.x + threadIdx.x;
   const uint y = blockIdx.y * blockDim.y + threadIdx.y;
 

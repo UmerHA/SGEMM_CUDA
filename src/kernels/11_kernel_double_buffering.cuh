@@ -81,9 +81,7 @@ processFromSmem(float *regM, float *regN, float *threadResults, const float *As,
 template <const int BM, const int BN, const int BK, const int WM, const int WN,
           const int WNITER, const int TM, const int TN, const int NUM_THREADS>
 __global__ void __launch_bounds__(NUM_THREADS)
-    matmulDoubleBuffering(const int M, const int N, const int K,
-                         const float alpha, float *A, float *B, float beta,
-                         float *C) {
+    matmulDoubleBuffering(const float *A, const float *B, float *C, int M, int N, int K) {
   const uint cRow = blockIdx.y;
   const uint cCol = blockIdx.x;
 

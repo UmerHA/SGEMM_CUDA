@@ -12,8 +12,7 @@ const int K9_NUM_THREADS = 256;
 
 template <const int BM, const int BN, const int BK, const int TM, const int TN>
 __global__ void __launch_bounds__(K9_NUM_THREADS)
-    matmulAutotuned(int M, int N, int K, float alpha, float *A, float *B,
-                   float beta, float *C) {
+    matmulAutotuned(const float *A, const float *B, float *C, int M, int N, int K) {
   const uint cRow = blockIdx.y;
   const uint cCol = blockIdx.x;
 

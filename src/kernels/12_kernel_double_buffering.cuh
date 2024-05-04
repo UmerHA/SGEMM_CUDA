@@ -102,8 +102,7 @@ processFromSmem(float *regM, float *regN, float *threadResults, const float *As,
 template <const int BM, const int BN, const int BK, const int WM, const int WN,
           const int WNITER, const int TM, const int TN, const int NUM_THREADS>
 __global__ void __launch_bounds__(NUM_THREADS)
-    runMatmulDoubleBuffering2(int M, int N, int K, float alpha, float *A,
-                             float *B, float beta, float *C) {
+    runMatmulDoubleBuffering2(const float *A, const float *B, float *C, int M, int N, int K) {
   auto block = cooperative_groups::this_thread_block();
   __shared__ cuda::barrier<cuda::thread_scope::thread_scope_block> frontBarrier;
   __shared__ cuda::barrier<cuda::thread_scope::thread_scope_block> backBarrier;
