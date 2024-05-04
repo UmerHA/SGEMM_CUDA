@@ -6,5 +6,5 @@ echo "🫡 Going to run first $i matmul kernels"
 # Use a C-style for loop to iterate from 1 to k
 for ((i=1; i<=k; i++)); do
     echo "🏃🏽‍♂️ Running kernel $i"
-    ./matmul $i
+    build/matmul $i
 done
