@@ -1,3 +1,5 @@
+**Note Umer: For simplicity, I changed all kernels from sgemms to matmuls**
+
 # Fast CUDA SGEMM from Scratch
 
 Step-by-step optimization of matrix multiplication, implemented in CUDA.

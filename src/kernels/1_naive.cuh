@@ -12,7 +12,7 @@ MxK * KxN = MxN
 
 */
 
-__global__ void sgemm_naive(int M, int N, int K, float alpha, const float *A,
+__global__ void matmul_naive(int M, int N, int K, float alpha, const float *A,
                             const float *B, float beta, float *C) {
   const uint x = blockIdx.x * blockDim.x + threadIdx.x;
   const uint y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -23,7 +23,6 @@ __global__ void sgemm_naive(int M, int N, int K, float alpha, const float *A,
     for (int i = 0; i < K; ++i) {
       tmp += A[x * K + i] * B[i * N + y];
     }
-    // C = α*(A@B)+β*C
-    C[x * N + y] = alpha * tmp + beta * C[x * N + y];
+    C[x * N + y] = tmp;
   }
 }

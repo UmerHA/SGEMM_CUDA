@@ -11,7 +11,7 @@
 
 template <const int BM, const int BN, const int BK, const int TM, const int TN>
 __global__ void __launch_bounds__((BM * BN) / (TM * TN), 1)
-    sgemm2DBlocktiling(int M, int N, int K, float alpha, const float *A,
+    matmul2DBlocktiling(int M, int N, int K, float alpha, const float *A,
                        const float *B, float beta, float *C) {
   const uint cRow = blockIdx.y;
   const uint cCol = blockIdx.x;
@@ -94,9 +94,7 @@ __global__ void __launch_bounds__((BM * BN) / (TM * TN), 1)
   // write out the results
   for (uint resIdxM = 0; resIdxM < TM; ++resIdxM) {
     for (uint resIdxN = 0; resIdxN < TN; ++resIdxN) {
-      C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN] =
-          alpha * threadResults[resIdxM * TN + resIdxN] +
-          beta * C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN];
+      C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN] = threadResults[resIdxM * TN + resIdxN];
     }
   }
 }

@@ -149,36 +149,36 @@ void runCublasTF32(cublasHandle_t handle, int M, int N, int K, float alpha,
                CUBLAS_COMPUTE_32F_FAST_TF32, CUBLAS_GEMM_DEFAULT_TENSOR_OP);
 }
 
-void run_sgemm_naive(int M, int N, int K, float alpha, float *A, float *B,
+void run_matmul_naive(int M, int N, int K, float alpha, float *A, float *B,
                      float beta, float *C) {
   dim3 gridDim(CEIL_DIV(M, 32), CEIL_DIV(N, 32));
   dim3 blockDim(32, 32);
-  sgemm_naive<<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
+  matmul_naive<<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
-void run_sgemm_coalesce(int M, int N, int K, float alpha, float *A, float *B,
+void run_matmul_coalesce(int M, int N, int K, float alpha, float *A, float *B,
                         float beta, float *C) {
   dim3 gridDim(CEIL_DIV(M, 32), CEIL_DIV(N, 32));
   dim3 blockDim(32 * 32);
-  sgemm_global_mem_coalesce<32>
+  matmul_global_mem_coalesce<32>
       <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
-void run_sgemm_shared_mem_block(int M, int N, int K, float alpha, float *A,
+void run_matmul_shared_mem_block(int M, int N, int K, float alpha, float *A,
                                 float *B, float beta, float *C) {
   dim3 gridDim(CEIL_DIV(M, 32), CEIL_DIV(N, 32));
   dim3 blockDim(32 * 32);
   // L1 cache becomes useless, since we access GMEM only via SMEM, so we carve
   // out all of L1 to SMEM. This doesn't currently make a difference, since
   // occupancy is limited by reg and thread count, but it's good to do anyway.
-  cudaFuncSetAttribute(sgemm_shared_mem_block<32>,
+  cudaFuncSetAttribute(matmul_shared_mem_block<32>,
                        cudaFuncAttributePreferredSharedMemoryCarveout,
                        cudaSharedmemCarveoutMaxShared);
-  sgemm_shared_mem_block<32>
+  matmul_shared_mem_block<32>
       <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
-void runSgemm1DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
+void runMatmul1DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
                            float beta, float *C) {
   const uint BM = 64;
   const uint BN = 64;
@@ -186,11 +186,11 @@ void runSgemm1DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
   const uint TM = 8;
   dim3 gridDim(CEIL_DIV(N, BN), CEIL_DIV(M, BM));
   dim3 blockDim((BM * BN) / TM);
-  sgemm1DBlocktiling<BM, BN, BK, TM>
+  matmul1DBlocktiling<BM, BN, BK, TM>
       <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
-void runSgemm2DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
+void runMatmul2DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
                            float beta, float *C) {
   const uint BK = 8;
   const uint TM = 8;
@@ -200,7 +200,7 @@ void runSgemm2DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
     const uint BN = 128;
     dim3 gridDim(CEIL_DIV(N, BN), CEIL_DIV(M, BM));
     dim3 blockDim((BM * BN) / (TM * TN));
-    sgemm2DBlocktiling<BM, BN, BK, TM, TN>
+    matmul2DBlocktiling<BM, BN, BK, TM, TN>
         <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
   } else {
     // this is a hacky solution to the underlying problem
@@ -209,12 +209,12 @@ void runSgemm2DBlocktiling(int M, int N, int K, float alpha, float *A, float *B,
     const uint BN = 64;
     dim3 gridDim(CEIL_DIV(N, BN), CEIL_DIV(M, BM));
     dim3 blockDim((BM * BN) / (TM * TN));
-    sgemm2DBlocktiling<BM, BN, BK, TM, TN>
+    matmul2DBlocktiling<BM, BN, BK, TM, TN>
         <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
   }
 }
 
-void runSgemmVectorize(int M, int N, int K, float alpha, float *A, float *B,
+void runMatmulVectorize(int M, int N, int K, float alpha, float *A, float *B,
                        float beta, float *C) {
   const uint BK = 8;
   const uint TM = 8;
@@ -224,7 +224,7 @@ void runSgemmVectorize(int M, int N, int K, float alpha, float *A, float *B,
     const uint BN = 128;
     dim3 gridDim(CEIL_DIV(N, BN), CEIL_DIV(M, BM));
     dim3 blockDim((BM * BN) / (TM * TN));
-    sgemmVectorize<BM, BN, BK, TM, TN>
+    matmulVectorize<BM, BN, BK, TM, TN>
         <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
   } else {
     // this is a hacky solution to the underlying problem
@@ -233,12 +233,12 @@ void runSgemmVectorize(int M, int N, int K, float alpha, float *A, float *B,
     const uint BN = 64;
     dim3 gridDim(CEIL_DIV(N, BN), CEIL_DIV(M, BM));
     dim3 blockDim((BM * BN) / (TM * TN));
-    sgemmVectorize<BM, BN, BK, TM, TN>
+    matmulVectorize<BM, BN, BK, TM, TN>
         <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
   }
 }
 
-void runSgemmResolveBankConflicts(int M, int N, int K, float alpha, float *A,
+void runMatmulResolveBankConflicts(int M, int N, int K, float alpha, float *A,
                                   float *B, float beta, float *C) {
   const uint BK = 8;
   const uint TM = 8;
@@ -248,7 +248,7 @@ void runSgemmResolveBankConflicts(int M, int N, int K, float alpha, float *A,
     const uint BN = 128;
     dim3 gridDim(CEIL_DIV(N, BN), CEIL_DIV(M, BM));
     dim3 blockDim((BM * BN) / (TM * TN));
-    sgemmResolveBankConflicts<BM, BN, BK, TM, TN>
+    matmulResolveBankConflicts<BM, BN, BK, TM, TN>
         <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
   } else {
     // this is a hacky solution to the underlying problem
@@ -257,12 +257,12 @@ void runSgemmResolveBankConflicts(int M, int N, int K, float alpha, float *A,
     const uint BN = 64;
     dim3 gridDim(CEIL_DIV(N, BN), CEIL_DIV(M, BM));
     dim3 blockDim((BM * BN) / (TM * TN));
-    sgemmResolveBankConflicts<BM, BN, BK, TM, TN>
+    matmulResolveBankConflicts<BM, BN, BK, TM, TN>
         <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
   }
 }
 
-void runSgemmResolveBankExtraCol(int M, int N, int K, float alpha, float *A,
+void runMatmulResolveBankExtraCol(int M, int N, int K, float alpha, float *A,
                                  float *B, float beta, float *C) {
   const uint BK = 8;
   const uint TM = 8;
@@ -272,7 +272,7 @@ void runSgemmResolveBankExtraCol(int M, int N, int K, float alpha, float *A,
     const uint BN = 128;
     dim3 gridDim(CEIL_DIV(N, BN), CEIL_DIV(M, BM));
     dim3 blockDim((BM * BN) / (TM * TN));
-    sgemmResolveBankExtraCol<BM, BN, BK, TM, TN>
+    matmulResolveBankExtraCol<BM, BN, BK, TM, TN>
         <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
   } else {
     // this is a hacky solution to the underlying problem
@@ -281,12 +281,12 @@ void runSgemmResolveBankExtraCol(int M, int N, int K, float alpha, float *A,
     const uint BN = 64;
     dim3 gridDim(CEIL_DIV(N, BN), CEIL_DIV(M, BM));
     dim3 blockDim((BM * BN) / (TM * TN));
-    sgemmResolveBankExtraCol<BM, BN, BK, TM, TN>
+    matmulResolveBankExtraCol<BM, BN, BK, TM, TN>
         <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
   }
 }
 
-void runSgemmAutotuned(int M, int N, int K, float alpha, float *A, float *B,
+void runMatmulAutotuned(int M, int N, int K, float alpha, float *A, float *B,
                        float beta, float *C) {
   // A100
   // const uint K9_BK = 16;
@@ -324,11 +324,11 @@ void runSgemmAutotuned(int M, int N, int K, float alpha, float *A, float *B,
                 "K9_BN*K9_BK must be a multiple of 4*256 to vectorize loads");
 
   dim3 gridDim(CEIL_DIV(N, K9_BN), CEIL_DIV(M, K9_BM));
-  sgemmAutotuned<K9_BM, K9_BN, K9_BK, K9_TM, K9_TN>
+  matmulAutotuned<K9_BM, K9_BN, K9_BK, K9_TM, K9_TN>
       <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
-void runSgemmWarptiling(int M, int N, int K, float alpha, float *A, float *B,
+void runMatmulWarptiling(int M, int N, int K, float alpha, float *A, float *B,
                         float beta, float *C) {
   // Settings for A100
   // const uint K10_NUM_THREADS = 128;
@@ -384,12 +384,12 @@ void runSgemmWarptiling(int M, int N, int K, float alpha, float *A, float *B,
                 "BN*BK must be a multiple of 4*256 to vectorize loads");
 
   dim3 gridDim(CEIL_DIV(N, K10_BN), CEIL_DIV(M, K10_BM));
-  sgemmWarptiling<K10_BM, K10_BN, K10_BK, K10_WM, K10_WN, K10_WNITER, K10_TM,
+  matmulWarptiling<K10_BM, K10_BN, K10_BK, K10_WM, K10_WN, K10_WNITER, K10_TM,
                   K10_TN, K10_NUM_THREADS>
       <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
-void runSgemmDoubleBuffering(int M, int N, int K, float alpha, float *A,
+void runMatmulDoubleBuffering(int M, int N, int K, float alpha, float *A,
                              float *B, float beta, float *C) {
   // Settings for A100
   // const uint K11_NUM_THREADS = 256;
@@ -445,12 +445,12 @@ void runSgemmDoubleBuffering(int M, int N, int K, float alpha, float *A,
                 "BN*BK must be a multiple of 4*256 to vectorize loads");
 
   dim3 gridDim(CEIL_DIV(N, K11_BN), CEIL_DIV(M, K11_BM));
-  sgemmDoubleBuffering<K11_BM, K11_BN, K11_BK, K11_WM, K11_WN, K11_WNITER,
+  matmulDoubleBuffering<K11_BM, K11_BN, K11_BK, K11_WM, K11_WN, K11_WNITER,
                        K11_TM, K11_TN, K11_NUM_THREADS>
       <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
 
-void runSgemmDoubleBuffering2(int M, int N, int K, float alpha, float *A,
+void runMatmulDoubleBuffering2(int M, int N, int K, float alpha, float *A,
                               float *B, float beta, float *C) {
   // Settings for A6000
   const uint K12_NUM_THREADS = 128;
@@ -496,7 +496,7 @@ void runSgemmDoubleBuffering2(int M, int N, int K, float alpha, float *A,
                 "BN*BK must be a multiple of 4*256 to vectorize loads");
 
   dim3 gridDim(CEIL_DIV(N, K12_BN), CEIL_DIV(M, K12_BM));
-  runSgemmDoubleBuffering2<K12_BM, K12_BN, K12_BK, K12_WM, K12_WN, K12_WNITER,
+  runMatmulDoubleBuffering2<K12_BM, K12_BN, K12_BK, K12_WM, K12_WN, K12_WNITER,
                            K12_TM, K12_TN, K12_NUM_THREADS>
       <<<gridDim, blockDim>>>(M, N, K, alpha, A, B, beta, C);
 }
@@ -508,40 +508,40 @@ void run_kernel(int kernel_num, int M, int N, int K, float alpha, float *A,
     runCublasFP32(handle, M, N, K, alpha, A, B, beta, C);
     break;
   case 1:
-    run_sgemm_naive(M, N, K, alpha, A, B, beta, C);
+    run_matmul_naive(M, N, K, alpha, A, B, beta, C);
     break;
   case 2:
-    run_sgemm_coalesce(M, N, K, alpha, A, B, beta, C);
+    run_matmul_coalesce(M, N, K, alpha, A, B, beta, C);
     break;
   case 3:
-    run_sgemm_shared_mem_block(M, N, K, alpha, A, B, beta, C);
+    run_matmul_shared_mem_block(M, N, K, alpha, A, B, beta, C);
     break;
   case 4:
-    runSgemm1DBlocktiling(M, N, K, alpha, A, B, beta, C);
+    runMatmul1DBlocktiling(M, N, K, alpha, A, B, beta, C);
     break;
   case 5:
-    runSgemm2DBlocktiling(M, N, K, alpha, A, B, beta, C);
+    runMatmul2DBlocktiling(M, N, K, alpha, A, B, beta, C);
     break;
   case 6:
-    runSgemmVectorize(M, N, K, alpha, A, B, beta, C);
+    runMatmulVectorize(M, N, K, alpha, A, B, beta, C);
     break;
   case 7:
-    runSgemmResolveBankConflicts(M, N, K, alpha, A, B, beta, C);
+    runMatmulResolveBankConflicts(M, N, K, alpha, A, B, beta, C);
     break;
   case 8:
-    runSgemmResolveBankExtraCol(M, N, K, alpha, A, B, beta, C);
+    runMatmulResolveBankExtraCol(M, N, K, alpha, A, B, beta, C);
     break;
   case 9:
-    runSgemmAutotuned(M, N, K, alpha, A, B, beta, C);
+    runMatmulAutotuned(M, N, K, alpha, A, B, beta, C);
     break;
   case 10:
-    runSgemmWarptiling(M, N, K, alpha, A, B, beta, C);
+    runMatmulWarptiling(M, N, K, alpha, A, B, beta, C);
     break;
   case 11:
-    runSgemmDoubleBuffering(M, N, K, alpha, A, B, beta, C);
+    runMatmulDoubleBuffering(M, N, K, alpha, A, B, beta, C);
     break;
   case 12:
-    runSgemmDoubleBuffering2(M, N, K, alpha, A, B, beta, C);
+    runMamtulDoubleBuffering2(M, N, K, alpha, A, B, beta, C);
     break;
   default:
     throw std::invalid_argument("Unknown kernel number");

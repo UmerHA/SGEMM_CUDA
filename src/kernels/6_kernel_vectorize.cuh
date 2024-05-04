@@ -10,7 +10,7 @@
 #define CEIL_DIV(M, N) (((M) + (N)-1) / (N))
 
 template <const int BM, const int BN, const int BK, const int TM, const int TN>
-__global__ void sgemmVectorize(int M, int N, int K, float alpha, float *A,
+__global__ void matmulVectorize(int M, int N, int K, float alpha, float *A,
                                float *B, float beta, float *C) {
   const uint cRow = blockIdx.y;
   const uint cCol = blockIdx.x;
@@ -81,18 +81,14 @@ __global__ void sgemmVectorize(int M, int N, int K, float alpha, float *A,
   // write out the results
   for (uint resIdxM = 0; resIdxM < TM; resIdxM += 1) {
     for (uint resIdxN = 0; resIdxN < TN; resIdxN += 4) {
-      // load C vector into registers
-      float4 tmp = reinterpret_cast<float4 *>(
-          &C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN])[0];
-      // perform GEMM update in reg
-      tmp.x = alpha * threadResults[resIdxM * TN + resIdxN] + beta * tmp.x;
-      tmp.y = alpha * threadResults[resIdxM * TN + resIdxN + 1] + beta * tmp.y;
-      tmp.z = alpha * threadResults[resIdxM * TN + resIdxN + 2] + beta * tmp.z;
-      tmp.w = alpha * threadResults[resIdxM * TN + resIdxN + 3] + beta * tmp.w;
+      float4 tmp;
+      tmp.x = threadResults[resIdxM * TN + resIdxN];
+      tmp.y = threadResults[resIdxM * TN + resIdxN + 1];
+      tmp.z = threadResults[resIdxM * TN + resIdxN + 2];
+      tmp.w = threadResults[resIdxM * TN + resIdxN + 3];
       // write back
       reinterpret_cast<float4 *>(
-          &C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN])[0] =
-          tmp;
+          &C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN])[0] = tmp;
     }
   }
 }
