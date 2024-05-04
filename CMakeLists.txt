@@ -9,7 +9,7 @@ include(CheckLanguage)
 check_language(CUDA)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CUDA_COMPUTE_CAPABILITY 86)
+set(CUDA_COMPUTE_CAPABILITY 75) # was 86, I changed to 75 as I'm using a T4 gpu
 
 # in debug mode, add debug symbols to device code
 # this disables most optimizations and kills performance
@@ -28,9 +28,9 @@ set_target_properties(matmul PROPERTIES CUDA_ARCHITECTURES ${CUDA_COMPUTE_CAPABI
 target_link_libraries(matmul ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 
 add_executable(cuBLAS_sgemm cuBLAS_sgemm.cu )
-set_target_properties(sgemm PROPERTIES CUDA_ARCHITECTURES ${CUDA_COMPUTE_CAPABILITY})
+set_target_properties(matmul PROPERTIES CUDA_ARCHITECTURES ${CUDA_COMPUTE_CAPABILITY})
 target_link_libraries(cuBLAS_sgemm ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 
 add_executable(simplest_kernel simplest_kernel.cu)
-set_target_properties(sgemm PROPERTIES CUDA_ARCHITECTURES ${CUDA_COMPUTE_CAPABILITY})
+set_target_properties(matmul PROPERTIES CUDA_ARCHITECTURES ${CUDA_COMPUTE_CAPABILITY})
 target_link_libraries(simplest_kernel ${CUDA_LIBRARIES})
